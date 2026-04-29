@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with points tracking",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "points": { "type": "number" },
+        "photoURL": { "type": "string" },
+        "displayName": { "type": "string" }
+      },
+      "required": ["email", "points"]
+    },
+    "Report": {
+      "title": "Environmental Report",
+      "description": "Report of an illegal dump, full container, or air pollution",
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["dump", "container", "air"] },
+        "userId": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "description": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "pointsAwarded": { "type": "boolean" }
+      },
+      "required": ["type", "userId", "location", "timestamp"]
+    },
+    "Event": {
+      "title": "Eco Action Event",
+      "description": "Community eco-action event",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" },
+        "pointsReward": { "type": "number" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "image": { "type": "string" }
+      },
+      "required": ["title", "description", "date", "pointsReward"]
+    },
+    "Transport": {
+      "title": "Waste Transport",
+      "description": "Information about transport to crab containers",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "description": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "enum": ["active", "full", "completed"] },
+        "capacity": { "type": "string" },
+        "interestedUsers": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "location", "timestamp", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Environmental reports"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Eco-action events"
+    },
+    "/transports/{transportId}": {
+      "schema": "Transport",
+      "description": "Waste transport listings"
+    }
+  }
+}

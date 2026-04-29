@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Lora", serif;
+  --font-display: "Outfit", sans-serif;
+  --font-serif: "Lora", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+.bento-card {
+  @apply bg-white/40 backdrop-blur-2xl rounded-[2.5rem] border border-white/60 ring-1 ring-white/30 shadow-none overflow-hidden;
+}
+
+.shiny-border {
+  @apply border border-white/70 ring-1 ring-white/20 shadow-none;
+}
+
+.bento-gradient {
+  @apply bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 text-white shadow-xl;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.tab-bg-dumps { @apply bg-red-600 text-white; }
+.tab-bg-containers { @apply bg-blue-600 text-white; }
+.tab-bg-air { @apply bg-orange-600 text-white; }
+.tab-bg-transport { @apply bg-indigo-600 text-white; }
+.tab-bg-actions { @apply bg-emerald-600 text-white; }

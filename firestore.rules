@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      // Allow individual profile viewing and leaderboard listing
+      allow get, list: if isSignedIn();
+      
+      function isValidUser(data) {
+        return data.keys().hasAll(['email', 'points']) &&
+               data.email is string && data.email.size() <= 100 &&
+               data.points is number && data.points >= 0 &&
+               (data.get('displayName', '') is string && data.get('displayName', '').size() <= 100) &&
+               (data.get('photoURL', '') is string && data.get('photoURL', '').size() <= 500);
+      }
+
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().email == request.auth.token.email;
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['points', 'displayName', 'photoURL'])
+      );
+    }
+
+    // --- Reports ---
+    match /reports/{reportId} {
+      function isValidReport(data) {
+        return data.keys().hasAll(['type', 'userId', 'location', 'timestamp']) &&
+               data.type in ['dump', 'container', 'air'] &&
+               data.userId == request.auth.uid &&
+               data.location.lat is number &&
+               data.location.lng is number &&
+               data.timestamp is timestamp &&
+               (data.get('description', '') is string && data.get('description', '').size() <= 1000) &&
+               (data.get('photoUrl', '') is string && data.get('photoUrl', '').size() <= 500) &&
+               (data.get('pointsAwarded', false) is bool);
+      }
+
+      allow get, list: if isSignedIn(); 
+      allow create: if isSignedIn() && isValidId(reportId) && isValidReport(incoming()) && incoming().timestamp == request.time;
+      allow update: if isSignedIn() && isOwner(existing().userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['description', 'photoUrl'])
+      );
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    // --- Events ---
+    match /events/{eventId} {
+      function isValidEvent(data) {
+        return data.keys().hasAll(['title', 'description', 'date', 'pointsReward', 'userId', 'participants', 'location']) &&
+               data.title is string && data.title.size() <= 100 &&
+               data.description is string && data.description.size() <= 2000 &&
+               data.date is timestamp &&
+               data.pointsReward is number &&
+               data.userId == request.auth.uid &&
+               data.participants is list &&
+               data.location is string && data.location.size() <= 200;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(eventId) && isValidEvent(incoming());
+      allow update: if isSignedIn() && (
+        isOwner(existing().userId) || 
+        (incoming().diff(existing()).affectedKeys().hasOnly(['participants']) && 
+         incoming().participants.size() >= existing().participants.size() &&
+         incoming().participants.hasAll([request.auth.uid]))
+      );
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    // --- Transports ---
+    match /transports/{transportId} {
+      function isValidTransport(data) {
+        return data.keys().hasAll(['userId', 'userName', 'location', 'timestamp', 'status', 'interestedUsers']) &&
+               data.userId == request.auth.uid &&
+               data.location.lat is number &&
+               data.location.lng is number &&
+               data.timestamp is timestamp &&
+               data.status in ['active', 'full', 'completed'] &&
+               data.interestedUsers is list &&
+               (data.get('description', '') is string && data.get('description', '').size() <= 500) &&
+               (data.get('capacity', '') is string && data.get('capacity', '').size() <= 100);
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(transportId) && isValidTransport(incoming());
+      allow update: if isSignedIn() && (
+        isOwner(existing().userId) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['interestedUsers', 'status']) && 
+         incoming().interestedUsers.size() >= existing().interestedUsers.size() &&
+         incoming().interestedUsers.hasAll([request.auth.uid]))
+      );
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+  }
+}

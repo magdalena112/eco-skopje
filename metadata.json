@@ -1,0 +1,6 @@
+{
+  "name": "ЕкоСкопје",
+  "description": "Апликација за пријавување на еколошки проблеми во Скопје и учество во еко-акции.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": []
+}
